@@ -39,6 +39,11 @@ Reusable **Ansible roles** that group tasks, handlers, templates and files aroun
       <td>Logs interactive bash commands to syslog (local6.notice) and writes them to <code>/var/log/rootcmd.log</code> on EL 8/9.</td>
       <td><code>- role: root-command-log</code></td>
     </tr>
+    <tr>
+      <td><code>create-user</code></td>
+      <td>Creates or removes a local user on EL 8/9, with groups, sudoers, password/lock, and SSH authorized_keys.</td>
+      <td><code>- role: create-user</code> with <code>user_name=deploy</code></td>
+    </tr>
   </tbody>
 </table>
 
