@@ -1,22 +1,156 @@
 ---
-# tasks file for disable-account
-  - name: Deshabilitar cuentas de usuario
-    user:
-      name: "{{ item }}"
-      password_lock: true
-    with_items: "{{ users_to_disable.split('\n') }}"
-    when: accion == 'Deshabilitar'
+# Disable a local account on EL 8/9:
+# - lock password, expire account, set shell to nologin
+# - remove sudoers drop-in
+# - revoke SSH authorized_keys (with optional backup)
+# - delete user's crontab
+# - kill user processes (optional)
 
-  - name: Habilitar cuentas de usuario
-    user:
-      name: "{{ item }}"
-      password_lock: false
-    with_items: "{{ users_to_disable.split('\n') }}"
-    when: accion == 'Habilitar'
+- name: Assert required variable user_name
+  ansible.builtin.assert:
+    that:
+      - user_name is defined
+      - user_name | length > 0
+    fail_msg: "`user_name` is required"
 
-  - name: Eliminar cuentas de usuario
-    user:
-      name: "{{ item }}"
-      state: absent
-    with_items: "{{ users_to_disable.split('\n') }}"
-    when: accion == 'Eliminar'
+- name: Set EL helpers (8/9 supported)
+  ansible.builtin.set_fact:
+    is_el_supported: "{{ ansible_facts.os_family == 'RedHat' and (ansible_facts.distribution_major_version | int) in [8, 9] }}"
+  changed_when: false
+
+- name: Fail if not EL 8/9
+  ansible.builtin.assert:
+    that:
+      - is_el_supported
+    fail_msg: "This role supports only EL 8/9 (RHEL/Rocky/Alma)."
+
+- name: Check if user exists
+  ansible.builtin.command: "getent passwd {{ user_name }}"
+  register: user_getent
+  changed_when: false
+  failed_when: false
+
+- name: Set existence and home path (if present)
+  ansible.builtin.set_fact:
+    user_exists: "{{ user_getent.rc == 0 }}"
+    user_home_path: "{{ (user_getent.stdout | regex_replace('^[^:]*(:[^:]*){4}:([^:]+):.*$', '\\2')) if (user_getent.rc == 0) else '/home/' ~ user_name }}"
+  changed_when: false
+
+- name: Determine nologin shell path
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop:
+    - /sbin/nologin
+    - /usr/sbin/nologin
+    - /bin/false
+  register: nologin_stats
+  when: user_exists
+
+- name: Pick first available nologin shell
+  ansible.builtin.set_fact:
+    nologin_shell: >-
+      {{
+        (nologin_stats.results | selectattr('stat.exists','defined') | selectattr('stat.exists') | map(attribute='stat.path') | list + ['/bin/false'])
+        | first
+      }}
+  when: user_exists
+
+# ----- Actions (only if user exists) -----
+
+- name: Kill user processes (optional)
+  ansible.builtin.command: "pkill -KILL -u {{ user_name }}"
+  ignore_errors: true
+  changed_when: true
+  when:
+    - user_exists
+    - disable_kill_processes | bool
+
+- name: Lock user password (usermod -L)
+  ansible.builtin.user:
+    name: "{{ user_name }}"
+    password_lock: true
+    state: present
+  when:
+    - user_exists
+    - disable_lock_password | bool
+
+- name: Expire account (chage -E 0)
+  ansible.builtin.command: "chage -E 0 {{ user_name }}"
+  register: chage_expire
+  changed_when: chage_expire.rc == 0
+  failed_when: false
+  when:
+    - user_exists
+    - disable_expire_account | bool
+
+- name: Set login shell to nologin
+  ansible.builtin.user:
+    name: "{{ user_name }}"
+    shell: "{{ nologin_shell }}"
+    state: present
+  when:
+    - user_exists
+    - disable_shell_nologin | bool
+
+- name: Remove sudoers drop-in
+  ansible.builtin.file:
+    path: "/etc/sudoers.d/{{ user_name }}"
+    state: absent
+  when:
+    - user_exists
+    - disable_remove_sudoers | bool
+
+# ----- SSH keys handling -----
+
+- name: Stat authorized_keys
+  ansible.builtin.stat:
+    path: "{{ user_home_path }}/.ssh/authorized_keys"
+  register: auth_keys_stat
+  when:
+    - user_exists
+    - disable_revoke_keys | bool
+
+- name: Ensure backup directory exists
+  ansible.builtin.file:
+    path: "{{ disable_backup_dir }}/{{ user_name }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  when:
+    - user_exists
+    - disable_revoke_keys | bool
+    - disable_backup_keys | bool
+    - auth_keys_stat.stat.exists | default(false)
+
+- name: Backup authorized_keys (timestamped)
+  ansible.builtin.copy:
+    src: "{{ user_home_path }}/.ssh/authorized_keys"
+    dest: "{{ disable_backup_dir }}/{{ user_name }}/authorized_keys.{{ ansible_date_time.iso8601_basic_short }}"
+    remote_src: true
+    mode: "0600"
+  when:
+    - user_exists
+    - disable_revoke_keys | bool
+    - disable_backup_keys | bool
+    - auth_keys_stat.stat.exists | default(false)
+
+- name: Remove authorized_keys
+  ansible.builtin.file:
+    path: "{{ user_home_path }}/.ssh/authorized_keys"
+    state: absent
+  when:
+    - user_exists
+    - disable_revoke_keys | bool
+    - auth_keys_stat.stat.exists | default(false)
+
+# ----- Crontab -----
+
+- name: Remove user's crontab
+  ansible.builtin.command: "crontab -r -u {{ user_name }}"
+  register: cron_rm
+  changed_when: cron_rm.rc == 0
+  failed_when: false
+  when:
+    - user_exists
+    - disable_remove_crontab | bool
