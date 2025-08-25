@@ -1,0 +1,27 @@
+---
+- name: Update Java symbolic link
+  hosts: all
+  become: yes
+  tasks:
+    - name: Ensure the source directory exists
+      stat:
+        path: "{{ source }}"  # e.g., /usr/java/jdk1.8.0_381
+      register: source_path
+
+    - name: Create or update the symbolic link
+      file:
+        src: "{{ source }}"  # e.g., /usr/java/jdk1.8.0_381
+        dest: "{{ dest }}"   # e.g., /usr/java/latest
+        state: link
+      when: source_path.stat.exists
+
+    - name: Ensure symbolic link has correct ownership
+      file:
+        path: "{{ dest }}"
+        state: link
+        owner: "{{ owner }}"
+        group: "{{ group }}"
+      when: source_path.stat.exists
+
+#    - name: Change ownership of the symbolic link (alternative with command)
+#      command: chown -h "{{ owner }}":"{{ group }}" "{{ dest }}"  # e.g., /usr/java/latest
