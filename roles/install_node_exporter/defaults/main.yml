@@ -1,2 +1,19 @@
 ---
-# defaults file for install_node_exporter
+# Version & download
+node_exporter_version: "1.8.2"
+node_exporter_os: "linux"
+node_exporter_arch: "amd64"
+node_exporter_download_url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.{{ node_exporter_os }}-{{ node_exporter_arch }}.tar.gz"
+# Optional sha256, e.g.: "sha256:XXXXXXXX..."
+node_exporter_checksum: ""
+
+# Binaries & user
+node_exporter_bin_dir: /usr/local/bin
+node_exporter_bin: "{{ node_exporter_bin_dir }}/node_exporter"
+node_exporter_user: node_exporter
+
+# Runtime flags
+node_exporter_listen_address: "0.0.0.0:9100"
+node_exporter_collectors_enabled:
+  - systemd
+node_exporter_extra_flags: []  # e.g. ["--web.telemetry-path=/metrics"]
