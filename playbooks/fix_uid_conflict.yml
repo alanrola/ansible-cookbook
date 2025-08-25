@@ -1,0 +1,63 @@
+---
+- name: Fix UID conflict for a specific user
+  hosts: all
+  become: true
+  vars:
+    uid_minimo: 1000
+
+  tasks:
+
+    - name: Validate that target user exists
+      getent:
+        database: passwd
+        key: "{{ usuario_target }}"
+      register: usuario_target_entry
+      failed_when: usuario_target_entry is not defined or usuario_target_entry.ansible_facts.getent_passwd is not defined
+      ignore_errors: false
+
+    - name: Gather users and their UIDs
+      getent:
+        database: passwd
+      register: passwd_entries
+
+    - name: Check if another user already has the target UID
+      set_fact:
+        usuario_conflictivo: "{{ item.key }}"
+      when: item.value[1] | int == uid_target | int and item.key != usuario_target
+      loop: "{{ passwd_entries.ansible_facts.getent_passwd | dict2items }}"
+      register: conflicto
+
+    - name: Extract conflicting user (if any)
+      set_fact:
+        usuario_conflictivo: "{{ item.ansible_facts.usuario_conflictivo }}"
+      loop: "{{ conflicto.results | selectattr('ansible_facts', 'defined') | list }}"
+
+    - name: Collect UIDs currently in use
+      set_fact:
+        uids_en_uso: "{{ passwd_entries.ansible_facts.getent_passwd.values() | map('extract', 1) | map('int') | list }}"
+
+    - name: Find a free UID >= {{ uid_minimo }}
+      set_fact:
+        nuevo_uid: "{{ item }}"
+      with_sequence: start={{ uid_minimo }} end=65000
+      when: item | int not in uids_en_uso
+      register: uid_disponible
+
+    - name: Set the first available UID
+      set_fact:
+        nuevo_uid: "{{ item.item }}"
+      loop: "{{ uid_disponible.results }}"
+      when: nuevo_uid is not defined and (item.skipped is not defined)
+
+    - name: Change UID of conflicting user to free up target UID
+      user:
+        name: "{{ usuario_conflictivo }}"
+        uid: "{{ nuevo_uid }}"
+        move_home: no
+      when: usuario_conflictivo is defined
+
+    - name: Assign target UID to {{ usuario_target }}
+      user:
+        name: "{{ usuario_target }}"
+        uid: "{{ uid_target }}"
+        move_home: no
