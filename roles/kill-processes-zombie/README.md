@@ -1,38 +1,83 @@
-Role Name
-=========
+# kill-processes-zombie
 
-A brief description of the role goes here.
+Finds **zombie processes** (state `Z`) and attempts cleanup by signalling their **parent processes (PPIDs)**.
 
-Requirements
-------------
+> Reminder: zombies cannot be killed directly; only their **parent** can reap them.  
+> The role starts in **dry-run** mode for safety.
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+---
 
-Role Variables
---------------
+## 🔧 Variables
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+<table>
+  <thead>
+    <tr>
+      <th>Variable</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td><code>dry_run</code></td><td><code>true</code></td><td>Show intended actions without sending signals. Set to <code>false</code> to act.</td></tr>
+    <tr><td><code>ppid_exclude</code></td><td><code>[1]</code></td><td>PPID list to never signal (e.g., <code>1</code> for <code>systemd/init</code>).</td></tr>
+    <tr><td><code>parent_name_exclude</code></td><td><code>[ "systemd", "init" ]</code></td><td>Skip parents whose command matches any of these names.</td></tr>
+    <tr><td><code>kill_signal_term</code></td><td><code>"TERM"</code></td><td>First signal sent to parent PIDs.</td></tr>
+    <tr><td><code>kill_signal_kill</code></td><td><code>"KILL"</code></td><td>Fallback signal if zombies persist after <code>TERM</code>.</td></tr>
+    <tr><td><code>wait_after_term</code></td><td><code>3</code></td><td>Seconds to wait after <code>SIGTERM</code> before checking again.</td></tr>
+  </tbody>
+</table>
 
-Dependencies
-------------
+---
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+## 🚀 Usage
 
-Example Playbook
-----------------
+Dry-run (default, safe):
+```yaml
+- hosts: all
+  become: true
+  roles:
+    - role: kill-processes-zombie
+```
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+Actually signal parents:
+```yaml
+- hosts: all
+  become: true
+  roles:
+    - role: kill-processes-zombie
+      vars:
+        dry_run: false
+```
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+Exclude specific parents:
+```yaml
+- hosts: all
+  become: true
+  roles:
+    - role: kill-processes-zombie
+      vars:
+        dry_run: false
+        ppid_exclude: [1, 1234, 5678]
+        parent_name_exclude: [systemd, init, sshd]
+```
 
-License
--------
+---
 
-BSD
+## 🛠 What the role does (summary)
 
-Author Information
-------------------
+1. Lists processes and identifies zombies (`STAT` contains `Z`).  
+2. Gathers their **parent PIDs** (PPIDs) and filters by:
+   - `ppid_exclude` (numbers)
+   - `parent_name_exclude` (command names)
+3. **Dry-run**: prints candidates without signalling (default).  
+4. When `dry_run: false`:
+   - Sends **SIGTERM** to parent PIDs, waits `wait_after_term` seconds.
+   - If zombies still exist under a PPID, sends **SIGKILL** to that parent.
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+---
+
+## ⚠️ Notes
+
+- Signalling a parent can affect **non-zombie children** from the same parent. Use with care.  
+- Keep `ppid_exclude: [1]` to avoid disrupting **PID 1**.  
+- Tested on EL 8/9; adjust commands if your platform differs.
