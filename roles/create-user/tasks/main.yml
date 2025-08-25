@@ -1,0 +1,42 @@
+---
+  - name: Verificar si el grupo existe
+    ansible.builtin.getent:
+      database: group
+      key: "{{ grupo }}"
+    register: grupo_existente
+    ignore_errors: yes
+
+  - name: Crear el grupo si no existe
+    ansible.builtin.group:
+      name: "{{ grupo }}"
+      state: present
+    when: grupo_existente.failed
+
+  - name: Crea Usuario 
+    ansible.builtin.user: 
+      name: "{{ usuario }}"
+      comment: "{{ comentario }}"
+      group: "{{ grupo }}"
+      password: "{{ password | password_hash('sha512') }}"
+      state: present
+      expires: -1      
+      
+  - name: Asegurar que la contraseña del usuario nunca expira
+    command: chage -M 99999 "{{ usuario }}"
+    when: expira == 'NO'
+
+  - name: Verificar si el grupo ya está en sudoers
+    ansible.builtin.command:
+      cmd: grep -q '^%{{ grupo }} ALL=(ALL) NOPASSWD:ALL' /etc/sudoers
+    register: sudoers_check
+    ignore_errors: yes
+    changed_when: false
+
+  - name: Agregar usuario al archivo sudoers si es necesario
+    ansible.builtin.lineinfile:
+      path: /etc/sudoers
+      state: present
+      regexp: '^%{{ grupo }}'
+      line: '%{{ grupo }} ALL=(ALL) NOPASSWD:ALL'
+      validate: 'visudo -cf %s'
+    when: agregar_sudoers == 'SI' and sudoers_check.rc != 0
