@@ -1,0 +1,26 @@
+---
+# tasks file for kill-processes--zombie
+  - name: Encontrar procesos zombie
+    shell: ps aux | awk '$8=="Z" {print $2}'
+    register: zombie_procs
+
+  - name: Verificar si se encontraron procesos zombie
+    debug:
+      msg: "No se encontraron procesos zombie."
+    when: zombie_procs.stdout == ""
+
+  - name: Mostrar procesos zombie encontrados
+    debug:
+      msg: "Procesos zombie encontrados:\n{{ zombie_procs.stdout }}"
+    when: zombie_procs.stdout != ""
+
+  - name: Matar procesos zombie
+    shell: kill -9 {{ item }}
+    with_items: "{{ zombie_procs.stdout_lines }}"
+    when: zombie_procs.stdout != ""
+    register: kill_result
+
+  - name: Verificar resultado de matar procesos zombie
+    debug:
+      msg: "Procesos zombie han sido matados:\n{{ kill_result.stdout }}"
+    when: kill_result.changed
