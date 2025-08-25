@@ -1,38 +1,79 @@
-Role Name
-=========
+# root-command-log
 
-A brief description of the role goes here.
+Log every interactive shell command to syslog (`local6.notice`) and store it in `/var/log/rootcmd.log` on **EL 8/9** (RHEL/Rocky/Alma).
 
-Requirements
-------------
+> Zombies can’t be killed—oh wait, wrong role 😉  
+> Reminder here: this role **does not change** user privileges; it only logs commands.
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+---
 
-Role Variables
---------------
+## 🧩 What it does
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+- Inserts a `PROMPT_COMMAND` block into users’ `~/.bashrc` to log each command via `logger -p local6.notice`.
+- Inserts environment initialization into `~/.bash_profile` (variables like `HOSTNAME`, `IP`, `USUARIO`).
+- Ensures the same blocks exist in `/etc/skel` so new users inherit them.
+- Adds an **rsyslog** rule to write `local6.notice` to `/var/log/rootcmd.log` and restarts `rsyslog`.
 
-Dependencies
-------------
+Compatible with **EL 8/9** (gated inside the tasks).
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+---
 
-Example Playbook
-----------------
+## 🔧 Variables
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+This role requires **no variables**.
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+---
 
-License
--------
+## 🚀 Usage
 
-BSD
+Minimal play:
+```yaml
+- hosts: all
+  become: true
+  roles:
+    - role: root-command-log
+```
 
-Author Information
-------------------
+---
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+## ✅ Verify
+
+```bash
+# Check rsyslog rule is active
+grep -F 'local6.notice' /etc/rsyslog.conf
+
+# Send a test message
+logger -p local6.notice "root-command-log test message"
+
+# Tail the log file
+tail -n 20 /var/log/rootcmd.log
+```
+
+Open a new shell session as a user and run a couple of commands; they should appear in `/var/log/rootcmd.log`.
+
+---
+
+## 🛠 How it works
+
+- **Bash hooks:** writes an `ANSIBLE MANAGED BLOCK` to `~/.bashrc` with a `PROMPT_COMMAND` that appends history and emits to syslog.  
+- **Environment:** adds an `ANSIBLE MANAGED BLOCK` to `~/.bash_profile` to set variables used in the log tag (e.g., `USUARIO`, `IP`).  
+- **rsyslog:** appends a `local6.notice` rule to `/etc/rsyslog.conf` and restarts the service.
+
+> The role targets all regular users (UID ≥ 1000) plus **root**, and mirrors the blocks in `/etc/skel`.
+
+---
+
+## ⚠️ Notes
+
+- Command lines may contain **sensitive arguments**; review compliance requirements before enabling in production.
+- The logging only affects **interactive bash** sessions that read `~/.bashrc`/`~/.bash_profile`.
+- Keep in mind that non-bash shells (e.g., zsh, fish) are out of scope.
+
+---
+
+## 🗑️ Rollback
+
+To remove:
+1. Delete the **ANSIBLE MANAGED BLOCK** sections from users’ `~/.bashrc` and `~/.bash_profile`, and from `/etc/skel/`.
+2. Remove the `local6.notice ... /var/log/rootcmd.log` line from `/etc/rsyslog.conf`.
+3. Restart rsyslog: `systemctl restart rsyslog`.
