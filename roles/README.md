@@ -30,6 +30,11 @@ Reusable **Ansible roles** that group tasks, handlers, templates and files aroun
       <td><code>- role: install_node_exporter</code></td>
     </tr>
     <tr>
+      <td><code>kill-processes-zombie</code></td>
+      <td>Finds zombie processes and signals their parent PIDs to clean them up; starts in dry-run for safety.</td>
+      <td><code>- role: kill-processes-zombie</code> with <code>dry_run: false</code></td>
+    </tr>
+    <tr>
       <td><em>(coming soon)</em></td>
       <td>First role will appear here.</td>
       <td>—</td>
