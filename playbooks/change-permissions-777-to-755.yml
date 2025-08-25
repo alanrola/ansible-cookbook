@@ -1,0 +1,16 @@
+---
+- name: Change permissions from 777 to 755
+  hosts: all
+  tasks:
+    - name: Split input into host–file pairs
+      set_fact:
+        server_file_pairs: "{{ server_file_list.split('\n') }}"
+
+    - name: Set permissions on matching files for this host
+      file:
+        path: "{{ item.split()[1] }}"
+        mode: "{{ mode }}"
+      loop: "{{ server_file_pairs }}"
+      when:
+        - item.split()[0] == inventory_hostname
+        - item.split() | length > 1
