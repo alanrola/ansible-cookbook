@@ -1,0 +1,14 @@
+---
+- name: Get OpenSSH version
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Retrieve OpenSSH version
+      command: ssh -V
+      register: ssh_version
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Display OpenSSH version
+      debug:
+        msg: "{{ inventory_hostname }} - {{ ssh_version.stderr | default('Error retrieving version') }}"
