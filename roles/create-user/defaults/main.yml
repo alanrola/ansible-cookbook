@@ -1,2 +1,26 @@
 ---
-# defaults file for 1-ROLE-VACIO
+# State
+user_state: present          # present | absent
+user_remove_home: false      # when state=absent
+
+# Identity
+user_name: ""                # REQUIRED (asserted in tasks)
+user_uid: ~                  # optional, integer
+user_shell: /bin/bash
+user_home: ~
+user_create_home: true
+
+# Password
+user_password: ~             # hashed string (e.g. from mkpasswd --method=sha-512)
+user_password_lock: false    # lock account without changing existing hash
+
+# Groups
+user_groups: []              # supplemental groups (ensure present + append)
+user_append_groups: true
+
+# Sudo
+user_sudo: false             # create /etc/sudoers.d/<user>
+user_sudo_nopasswd: false    # NOPASSWD: ALL if true
+
+# SSH
+user_ssh_authorized_keys: [] # list of public keys
