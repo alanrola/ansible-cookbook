@@ -124,15 +124,6 @@ ansible-playbook -i inventory/hosts.ini site.yml \
   -e '{update_cache: true, packages_to_install: ["vim","git"]}'
 ```
 
-### 5) Define vars in inventory
-`group_vars/all.yml` (or any group/host):
-```yaml
-update_cache: true
-packages_to_install: [vim, git]
-packages_to_remove: []
-packages_pinned: []
-```
-
 ---
 
 ## 🧪 Idempotency
