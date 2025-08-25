@@ -1,38 +1,181 @@
-Role Name
-=========
+# manage-packages
 
-A brief description of the role goes here.
+Role to **install/upgrade** and **remove** packages on RHEL-like systems, with optional **cache update** and **version pinning**.
 
-Requirements
-------------
+> This role is simple, readable, and idempotent. Review and adapt before using in production.
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+---
 
-Role Variables
---------------
+## ✅ What it does
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+- Optionally **updates DNF cache**.
+- **Installs / upgrades** a list of packages.
+- **Removes** a list of packages.
+- Optionally **pins exact versions** (installs `name-version`).
 
-Dependencies
-------------
+---
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+## 🧩 Requirements
 
-Example Playbook
-----------------
+- Target OS: **RHEL / Rocky / Alma (EL 8/9)**  
+  > Cache step uses `dnf`. For EL7, replace with `yum` or drop it.
+- Privileges: typically `become: true`.
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+---
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+## 🔧 Role variables
 
-License
--------
+All defaults live in `defaults/main.yml`.
 
-BSD
+<!-- Role variables -->
+<table>
+  <thead>
+    <tr>
+      <th>Variable</th>
+      <th>Type</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>update_cache</code></td>
+      <td><code>bool</code></td>
+      <td><code>false</code></td>
+      <td>If <code>true</code>, refresh DNF cache before changes.</td>
+    </tr>
+    <tr>
+      <td><code>packages_to_install</code></td>
+      <td><code>list[string]</code></td>
+      <td><code>[]</code></td>
+      <td>Packages ensured <strong>present</strong> (install/upgrade).</td>
+    </tr>
+    <tr>
+      <td><code>packages_to_remove</code></td>
+      <td><code>list[string]</code></td>
+      <td><code>[]</code></td>
+      <td>Packages ensured <strong>absent</strong> (remove).</td>
+    </tr>
+    <tr>
+      <td><code>packages_pinned</code></td>
+      <td><code>list[dict]</code></td>
+      <td><code>[]</code></td>
+      <td>Exact versions to install; items like <code>{ name: "pkg", version: "X.Y.Z" }</code>.</td>
+    </tr>
+  </tbody>
+</table>
 
-Author Information
-------------------
+Example for `packages_pinned`:
+```yaml
+packages_pinned:
+  - { name: "nano", version: "2.9.8-1.el8" }
+  - { name: "curl", version: "7.76.1-23.el9" }
+```
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+> Pinning installs the specified version **now**; it does **not** block future upgrades.  
+> For long-term holds, consider `dnf versionlock` (out of scope for this role).
+
+---
+
+## 🚀 Usage
+
+### 1) Minimal playbook
+```yaml
+- name: Manage packages
+  hosts: all
+  become: true
+  roles:
+    - role: manage-packages
+      vars:
+        packages_to_install:
+          - vim
+          - git
+```
+
+### 2) Install and remove in the same run
+```yaml
+- name: Install and remove packages
+  hosts: all
+  become: true
+  roles:
+    - role: manage-packages
+      vars:
+        update_cache: true
+        packages_to_install: [htop, wget]
+        packages_to_remove: [telnet]
+```
+
+### 3) Pin exact versions
+```yaml
+- name: Pin exact versions
+  hosts: all
+  become: true
+  roles:
+    - role: manage-packages
+      vars:
+        packages_pinned:
+          - { name: "nano", version: "2.9.8-1.el8" }
+          - { name: "curl", version: "7.76.1-23.el9" }
+```
+
+### 4) Quick one-off via CLI
+```bash
+ansible-playbook -i inventory/hosts.ini site.yml \
+  -e '{update_cache: true, packages_to_install: ["vim","git"]}'
+```
+
+### 5) Define vars in inventory
+`group_vars/all.yml` (or any group/host):
+```yaml
+update_cache: true
+packages_to_install: [vim, git]
+packages_to_remove: []
+packages_pinned: []
+```
+
+---
+
+## 🧪 Idempotency
+
+- `package: state=present/absent` keeps runs idempotent.  
+- Cache refresh may report `changed` when metadata updates.
+
+---
+
+## 🧾 Defaults (reference)
+```yaml
+# defaults/main.yml
+update_cache: false
+packages_to_install: []
+packages_to_remove: []
+packages_pinned: []
+```
+
+## 🔍 Task summary (reference)
+```yaml
+- name: Update DNF cache (optional)
+  dnf:
+    update_cache: true
+  when: (update_cache | default(false)) | bool
+
+- name: Install or upgrade packages
+  package:
+    name: "{{ packages_to_install }}"
+    state: present
+  when: (packages_to_install | default([])) | length > 0
+
+- name: Remove packages
+  package:
+    name: "{{ packages_to_remove }}"
+    state: absent
+  when: (packages_to_remove | default([])) | length > 0
+
+- name: Ensure pinned package versions (optional)
+  package:
+    name: "{{ item.name }}-{{ item.version }}"
+    state: present
+  loop: "{{ packages_pinned | default([]) }}"
+  when: (packages_pinned | default([])) | length > 0
+```
+
+---
