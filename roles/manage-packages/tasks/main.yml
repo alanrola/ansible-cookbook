@@ -1,0 +1,12 @@
+---
+# tasks file for manage-packages
+  - name: Instalar o actualizar paquete
+    ansible.builtin.yum:
+      name: "{{ package_name }}"
+      state: "{{ package_state }}" #present para instalar, latest para actualizar
+    register: package_result
+
+  - name: Mostrar resultado
+    debug:
+      msg: "El paquete {{ package_name }} ha sido {{ package_state }} con éxito."
+    when: package_result.changed
