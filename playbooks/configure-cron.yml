@@ -1,0 +1,15 @@
+---
+- name: Configure CRON
+  hosts: all
+  tasks:
+    - name: Create a cron file under /etc/cron.d
+      ansible.builtin.cron:
+        name: "{{ name }}"
+        minute: "{{ minute }}"
+        hour: "{{ hour }}"
+        day: "{{ day }}"
+        month: "{{ month }}"
+        weekday: "{{ weekday }}"
+        user: "{{ user }}"
+        job: "{{ job }}"
+        cron_file: "{{ cron_file }}"
