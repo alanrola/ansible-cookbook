@@ -1,0 +1,22 @@
+---
+# tasks file for disable-account
+  - name: Deshabilitar cuentas de usuario
+    user:
+      name: "{{ item }}"
+      password_lock: true
+    with_items: "{{ users_to_disable.split('\n') }}"
+    when: accion == 'Deshabilitar'
+
+  - name: Habilitar cuentas de usuario
+    user:
+      name: "{{ item }}"
+      password_lock: false
+    with_items: "{{ users_to_disable.split('\n') }}"
+    when: accion == 'Habilitar'
+
+  - name: Eliminar cuentas de usuario
+    user:
+      name: "{{ item }}"
+      state: absent
+    with_items: "{{ users_to_disable.split('\n') }}"
+    when: accion == 'Eliminar'
