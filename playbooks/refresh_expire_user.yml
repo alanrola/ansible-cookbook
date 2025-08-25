@@ -1,0 +1,27 @@
+---
+- name: Reset password expiration for a user on RHEL
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Verify user exists
+      ansible.builtin.command: id "{{ usuario }}"
+      register: usuario_existente
+      ignore_errors: true
+      changed_when: false
+
+    - name: Reset password change date to today and set expiration
+      ansible.builtin.shell: chage -d "$(date +%Y-%m-%d)" -M "{{ dias_expiracion }}" -E -1 "{{ usuario }}"
+      when: usuario_existente.rc == 0
+      changed_when: true
+
+    - name: Verify new password expiration settings
+      ansible.builtin.command: chage -l "{{ usuario }}"
+      register: chage_output
+      when: usuario_existente.rc == 0
+      changed_when: false
+
+    - name: Show password expiration info
+      ansible.builtin.debug:
+        msg: "{{ chage_output.stdout_lines }}"
+      when: usuario_existente.rc == 0
