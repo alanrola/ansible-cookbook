@@ -1,0 +1,32 @@
+---
+- name: List all Pods in the cluster
+  hosts: localhost
+  gather_facts: false
+  collections:
+    - kubernetes.core
+
+  tasks:
+    - name: Get current timestamp (seconds)
+      set_fact:
+        now: "{{ lookup('pipe', 'date +%s') | float }}"
+
+    - name: Fetch all cluster Pods
+      kubernetes.core.k8s_info:
+        kind: Pod
+      register: all_pods
+
+    - name: Display Pods in table format
+      debug:
+        msg: |
+          NAMESPACE         NAME                               READY     STATUS    RESTARTS   AGE      IP             NODE
+          ------------------------------------------------------------------------------------------------------------------------
+          {% for pod in all_pods.resources %}
+          {{ '%-16s' | format(pod.metadata.namespace) }}
+          {{ '%-35s' | format(pod.metadata.name) }}
+          {{ '%-9s'  | format(pod.status.containerStatuses | map(attribute='ready') | select('equalto', true) | list | length ~ '/' ~ (pod.status.containerStatuses | length)) }}
+          {{ '%-9s'  | format(pod.status.phase) }}
+          {{ '%-10s' | format((pod.status.containerStatuses | map(attribute='restartCount') | list | sum) | default(0)) }}
+          {{ '%-8s'  | format(((now | float) - (pod.metadata.creationTimestamp | to_datetime('%Y-%m-%dT%H:%M:%SZ')).timestamp()) | int // 60 ~ 'm') }}
+          {{ '%-15s' | format(pod.status.podIP | default('N/A')) }}
+          {{ '%s'    | format(pod.spec.nodeName | default('N/A')) }}
+          {% endfor %}
