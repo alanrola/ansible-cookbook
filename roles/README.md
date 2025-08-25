@@ -34,6 +34,11 @@ Reusable **Ansible roles** that group tasks, handlers, templates and files aroun
       <td>Finds zombie processes and signals their parent PIDs to clean them up; starts in dry-run for safety.</td>
       <td><code>- role: kill-processes-zombie</code> with <code>dry_run: false</code></td>
     </tr>
+    <tr>
+      <td><code>root-command-log</code></td>
+      <td>Logs interactive bash commands to syslog (local6.notice) and writes them to <code>/var/log/rootcmd.log</code> on EL 8/9.</td>
+      <td><code>- role: root-command-log</code></td>
+    </tr>
   </tbody>
 </table>
 
