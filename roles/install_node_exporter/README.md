@@ -77,14 +77,18 @@ ansible-playbook -i inventory/hosts.ini site.yml \
 
 ## ✅ Verify
 
-```bash
 # Service status
+```bash
 systemctl status node_exporter
+```
 
 # Metrics locally
+```bash
 curl -s localhost:9100/metrics | head
+```
 
 # Listening socket
+```bash
 ss -ltnp | grep 9100
 ```
 
