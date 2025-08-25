@@ -44,6 +44,11 @@ Reusable **Ansible roles** that group tasks, handlers, templates and files aroun
       <td>Creates or removes a local user on EL 8/9, with groups, sudoers, password/lock, and SSH authorized_keys.</td>
       <td><code>- role: create-user</code> with <code>user_name=deploy</code></td>
     </tr>
+    <tr>
+      <td><code>disable-account</code></td>
+      <td>Safely disables a local account on EL 8/9 (lock, expire, nologin shell), revokes SSH keys with backup, removes crontab and sudoers; optional process kill.</td>
+      <td><code>- role: disable-account</code> with <code>user_name=olduser</code></td>
+    </tr>
   </tbody>
 </table>
 
