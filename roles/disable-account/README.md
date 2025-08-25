@@ -75,8 +75,3 @@ test -f /root/disabled-accounts/olduser/authorized_keys.* && echo "backup exists
 - If the user logs in with non-bash shells, SSH key removal is the most effective block.
 - You can re-enable the account by reversing the steps (set a valid shell, unlock password, restore keys if needed).
 - The role is a no-op if the user does not exist.
-
----
-
-## 📜 License
-Apache-2.0
