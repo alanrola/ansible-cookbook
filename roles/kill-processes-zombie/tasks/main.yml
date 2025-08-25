@@ -1,26 +1,87 @@
 ---
-# tasks file for kill-processes--zombie
-  - name: Encontrar procesos zombie
-    shell: ps aux | awk '$8=="Z" {print $2}'
-    register: zombie_procs
+# Kill zombie processes by signalling their parent (PPID).
+# NOTE: true zombies (state "Z") cannot be killed directly; the parent must reap or be terminated.
 
-  - name: Verificar si se encontraron procesos zombie
-    debug:
-      msg: "No se encontraron procesos zombie."
-    when: zombie_procs.stdout == ""
+- name: Collect zombie processes (PID:PPID:CMD)
+  ansible.builtin.shell: |
+    set -o pipefail
+    ps -eo pid=,ppid=,stat=,comm= | awk '$3 ~ /Z/ {print $1 ":" $2 ":" $4}'
+  args:
+    executable: /bin/bash
+  register: zombies_ps
+  changed_when: false
 
-  - name: Mostrar procesos zombie encontrados
-    debug:
-      msg: "Procesos zombie encontrados:\n{{ zombie_procs.stdout }}"
-    when: zombie_procs.stdout != ""
+- name: Parse zombie entries into list
+  ansible.builtin.set_fact:
+    zombie_entries: "{{ zombies_ps.stdout_lines | default([]) | map('split', ':') | list }}"
 
-  - name: Matar procesos zombie
-    shell: kill -9 {{ item }}
-    with_items: "{{ zombie_procs.stdout_lines }}"
-    when: zombie_procs.stdout != ""
-    register: kill_result
+- name: Show found zombies (if any)
+  ansible.builtin.debug:
+    msg: >-
+      Found zombie: PID={{ item.0 }}, PPID={{ item.1 }}, CMD={{ item.2 }}
+  loop: "{{ zombie_entries }}"
+  when: zombie_entries | length > 0
 
-  - name: Verificar resultado de matar procesos zombie
-    debug:
-      msg: "Procesos zombie han sido matados:\n{{ kill_result.stdout }}"
-    when: kill_result.changed
+- name: Build candidate parent PIDs (PPIDs) set
+  ansible.builtin.set_fact:
+    candidate_ppids: "{{ (candidate_ppids | default([]) + [item.1]) | unique }}"
+  loop: "{{ zombie_entries }}"
+  when: zombie_entries | length > 0
+
+- name: Exclude PPIDs by list (e.g., 1 for systemd)
+  ansible.builtin.set_fact:
+    filtered_ppids: "{{ candidate_ppids | map('int') | list | difference(ppid_exclude | map('int') | list) }}"
+  when: (candidate_ppids | default([])) | length > 0
+
+- name: Query parent command names
+  ansible.builtin.command: "ps -o comm= -p {{ item }}"
+  register: parent_names
+  changed_when: false
+  failed_when: false
+  loop: "{{ filtered_ppids | default([]) }}"
+
+- name: Keep PPIDs whose parent command is not excluded
+  ansible.builtin.set_fact:
+    kill_ppids: >-
+      {{
+        (parent_names.results | default([]))
+        | rejectattr('rc', 'ne', 0)
+        | rejectattr('stdout', 'in', parent_name_exclude)
+        | map(attribute='item')
+        | list
+      }}
+
+- name: Dry-run: show which parent PIDs would be signaled
+  ansible.builtin.debug:
+    msg: "Would signal PPID={{ item }} (parent of zombie)"
+  loop: "{{ kill_ppids | default([]) }}"
+  when: (dry_run | default(true)) | bool
+
+- name: Send SIGTERM to parent PIDs
+  ansible.builtin.command: "kill -{{ kill_signal_term }} {{ item }}"
+  register: term_results
+  ignore_errors: true
+  changed_when: true
+  loop: "{{ kill_ppids | default([]) }}"
+  when: not (dry_run | default(true)) | bool
+
+- name: Wait after SIGTERM
+  ansible.builtin.pause:
+    seconds: "{{ wait_after_term }}"
+  when: (term_results is defined) and (kill_ppids | default([])) | length > 0 and not (dry_run | default(true)) | bool
+
+- name: Check if zombies still exist under each PPID
+  ansible.builtin.shell: |
+    ps -eo ppid=,stat= | awk -v P={{ item }} '$1 == P && $2 ~ /Z/ {f=1} END {exit f?0:1}'
+  register: still_zombies
+  failed_when: false
+  changed_when: false
+  loop: "{{ kill_ppids | default([]) }}"
+  when: not (dry_run | default(true)) | bool
+
+- name: Send SIGKILL to stubborn parent PIDs
+  ansible.builtin.command: "kill -{{ kill_signal_kill }} {{ item.item }}"
+  when: (not (dry_run | default(true)) | bool) and (item.rc is defined and item.rc == 0)
+  ignore_errors: true
+  changed_when: true
+  loop: "{{ still_zombies.results | default([]) }}"
