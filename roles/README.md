@@ -20,6 +20,11 @@ Reusable **Ansible roles** that group tasks, handlers, templates and files aroun
   </thead>
   <tbody>
     <tr>
+      <td><code>manage-packages</code></td>
+      <td>Installs/upgrades or removes packages, optionally updates DNF cache and pins specific versions.</td>
+      <td><code>- role: manage-packages</code> with <code>packages_to_install: [vim, git]</code></td>
+    </tr>
+    <tr>
       <td><em>(coming soon)</em></td>
       <td>First role will appear here.</td>
       <td>—</td>
