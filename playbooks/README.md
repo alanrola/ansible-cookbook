@@ -46,7 +46,12 @@ This folder contains a collection of **Ansible playbooks**, written as reusable 
       <td><code>configure-cron.yml</code></td>
       <td>Creates/updates a cron entry under <code>/etc/cron.d</code> using the Ansible cron module.</td>
       <td><code>ansible-playbook -i inventory/hosts.ini playbooks/configure-cron.yml -e "name=nightly_backup minute=0 hour=3 day=* month=* weekday=* user=root job='/usr/local/bin/backup.sh' cron_file=nightly_backup"</code></td>
-      </tr>
+    </tr>
+    <tr>
+      <td><code>install_scap_client.yml</code></td>
+      <td>Enables Satellite Client repo and installs <code>rubygem-foreman_scap_client</code> and Katello host tools.</td>
+      <td><code>ansible-playbook -i inventory/hosts.ini playbooks/install_scap_client.yml</code></td>
+    </tr>
     <tr>
       <td><em>(coming soon)</em></td>
       <td>More recipes will be added here.</td>
