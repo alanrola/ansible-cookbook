@@ -1,0 +1,31 @@
+---
+- name: Modify RHSM configuration and refresh subscription
+  hosts: all
+  tasks:
+    - name: Modify port in rhsm.conf
+      replace:
+        path: /etc/rhsm/rhsm.conf
+        regexp: '^port = 8443'
+        replace: 'port = 443'
+      register: port_change
+
+    - name: Enable insecure in rhsm.conf
+      replace:
+        path: /etc/rhsm/rhsm.conf
+        regexp: '^insecure = 0'
+        replace: 'insecure = 1'
+      register: insecure_change
+
+    - name: Determine if configuration changed
+      set_fact:
+        config_changed: "{{ port_change.changed or insecure_change.changed }}"
+
+    - name: Refresh subscription with Red Hat Subscription Manager
+      command: subscription-manager refresh
+      when: config_changed | bool
+      register: result
+
+    - name: Show refresh output
+      debug:
+        msg: "{{ result.stdout_lines }}"
+      when: config_changed | bool
