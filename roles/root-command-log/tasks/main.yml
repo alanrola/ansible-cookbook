@@ -1,127 +1,152 @@
 ---
-# tasks file for root-command-log-RHEL9
-  - name: Obtiene home de UUID mayores a 500
-    shell: | 
-      { cut -d: -f1,3,6,7 /etc/passwd | awk -F: '$2 >= 1000 && $4 !~ /(nologin|false)$/ {print $3}' | grep -v nobody; grep '^root:' /etc/passwd | cut -d: -f6; } | sort -u
-    register: home_dirs
-    when: ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_major_version'] == '9'
+# Root command logging for RHEL 8/9
+# - Appends blocks to users' ~/.bashrc and ~/.bash_profile
+# - Ensures /etc/skel has the same blocks for new accounts
+# - Adds rsyslog rule for local6.notice -> /var/log/rootcmd.log
 
-  - name: Asegurarse de que el archivo .bashrc existe
-    file:
-      path: "{{ item }}/.bashrc"
-      state: touch
-    loop: "{{ home_dirs.stdout_lines }}"
-    when: ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_major_version'] == '9'
+- name: Detect EL 8/9 support
+  ansible.builtin.set_fact:
+    el_major: "{{ ansible_facts.distribution_major_version | int }}"
+    is_el_supported: "{{ ansible_facts.os_family == 'RedHat' and (ansible_facts.distribution_major_version | int) in [8, 9] }}"
 
-  - name: Agregar bloque de texto al .bashrc
-    blockinfile:
-      path: "{{ item }}/.bashrc"
-      backup: yes
-      create: yes
-      marker: "# {mark} ANSIBLE MANAGED BLOCK"
-      block: |
-        #Configuracion para root-command-log - No modificar
-        PROMPT_COMMAND='history -a >(tee -a ~/.bash_history | logger -p local6.notice -t "$HOSTNAME ; $USUARIO: ; IP_SOURCE=$IP ; CMD> $SSH_CONNECTION")'
-    loop: "{{ home_dirs.stdout_lines }}"
-    when: ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_major_version'] == '9'
-  
-  - name: Asegurarse de que el archivo .bash_profile existe
-    file:
-      path: "{{ item }}/.bash_profile"
-      state: touch
-    loop: "{{ home_dirs.stdout_lines }}"
-    when: ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_major_version'] == '9'
+- name: Fail if not on RHEL-like 8/9
+  ansible.builtin.assert:
+    that:
+      - is_el_supported
+    fail_msg: "This role supports only RHEL/Rocky/Alma EL 8 or 9."
 
-  - name: Agregar bloque de texto al .bash_profile
-    blockinfile:
-      path: "{{ item }}/.bash_profile"
-      backup: yes
-      create: yes
-      marker: "# {mark} ANSIBLE MANAGED BLOCK"
-      block: |
-        #Configuracion para root-command-log - No modificar
-        terminal=`tty | cut -d"/" -f 3,4`
-        HOSTNAME=`hostname`
-        INFO_USER=$(w | grep $terminal | grep "priv" | wc -l)
-        if test $INFO_USER -eq "1"
-        then
-        USUARIOp1=S`w | grep $terminal | awk '{print $1}'`
-        USUARIO=SUDO_`w | grep $terminal | awk '{print $8}'`
-        else
-        USUARIO=`w | grep $terminal | awk '{print $1}'`
-        fi
+# ----- Per-user home configuration -----
 
-        # User specific environment and startup programs
-        IP=$(w -f | grep $terminal | awk '{print $3}')
-        PATH=$PATH:$HOME/bin
-        TTY=$(/usr/bin/tty)
-        export PATH TTY IP USUARIO HOSTNAME
-        unset USERNAME
-    loop: "{{ home_dirs.stdout_lines }}"
-    when: ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_major_version'] == '9'
+- name: Gather home directories (UID >= 1000) plus root
+  ansible.builtin.shell: |
+    { cut -d: -f1,3,6,7 /etc/passwd | awk -F: '$2 >= 1000 && $4 !~ /(nologin|false)$/{print $3}' | grep -v nobody; \
+      grep '^root:' /etc/passwd | cut -d: -f6; } | sort -u
+  register: home_dirs
+  changed_when: false
+  when: is_el_supported
 
-  - name: Asegurarse de que el archivo /etc/skel/.bashrc existe
-    file:
-      path: "/etc/skel/.bashrc"
-      state: touch
-    when: ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_major_version'] == '9'
+- name: Ensure ~/.bashrc exists for each user
+  ansible.builtin.file:
+    path: "{{ item }}/.bashrc"
+    state: touch
+  loop: "{{ home_dirs.stdout_lines }}"
+  when: is_el_supported
 
-  - name: Agregar bloque de texto al /etc/skel/.bashrc
-    blockinfile:
-      path: "/etc/skel/.bashrc"
-      backup: yes
-      create: yes
-      marker: "# {mark} ANSIBLE MANAGED BLOCK"
-      block: |
-        #Configuracion para root-command-log - No modificar
-        PROMPT_COMMAND='history -a >(tee -a ~/.bash_history | logger -p local6.notice -t "$HOSTNAME ; $USUARIO: ; IP_SOURCE=$IP ; CMD> $SSH_CONNECTION")'
-    when: ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_major_version'] == '9'
+- name: Insert logging block into ~/.bashrc
+  ansible.builtin.blockinfile:
+    path: "{{ item }}/.bashrc"
+    backup: true
+    create: true
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+    block: |
+      # Config for root-command-log – do not modify
+      PROMPT_COMMAND='history -a >(tee -a ~/.bash_history | logger -p local6.notice -t "$HOSTNAME ; $USUARIO: ; IP_SOURCE=$IP ; CMD> $SSH_CONNECTION")'
+  loop: "{{ home_dirs.stdout_lines }}"
+  when: is_el_supported
 
-  - name: Asegurarse de que el archivo /etc/skel/.bash_profile existe
-    file:
-      path: "/etc/skel/.bash_profile"
-      state: touch
-    when: ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_major_version'] == '9'
+- name: Ensure ~/.bash_profile exists for each user
+  ansible.builtin.file:
+    path: "{{ item }}/.bash_profile"
+    state: touch
+  loop: "{{ home_dirs.stdout_lines }}"
+  when: is_el_supported
 
-  - name: Agregar bloque de texto al /etc/skel/.bash_profile
-    blockinfile:
-      path: "/etc/skel/.bash_profile"
-      backup: yes
-      create: yes
-      marker: "# {mark} ANSIBLE MANAGED BLOCK"
-      block: |
-        #Configuracion para root-command-log - No modificar
-        terminal=`tty | cut -d"/" -f 3,4`
-        HOSTNAME=`hostname`
-        INFO_USER=$(w | grep $terminal | grep "priv" | wc -l)
-        if test $INFO_USER -eq "1"
-        then
-        USUARIOp1=S`w | grep $terminal | awk '{print $1}'`
-        USUARIO=SUDO_`w | grep $terminal | awk '{print $8}'`
-        else
-        USUARIO=`w | grep $terminal | awk '{print $1}'`
-        fi
+- name: Insert environment block into ~/.bash_profile
+  ansible.builtin.blockinfile:
+    path: "{{ item }}/.bash_profile"
+    backup: true
+    create: true
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+    block: |
+      # Config for root-command-log – do not modify
+      terminal=`tty | cut -d"/" -f 3,4`
+      HOSTNAME=`hostname`
+      INFO_USER=$(w | grep $terminal | grep "priv" | wc -l)
+      if test $INFO_USER -eq "1"
+      then
+      USUARIOp1=S`w | grep $terminal | awk '{print $1}'`
+      USUARIO=SUDO_`w | grep $terminal | awk '{print $8}'`
+      else
+      USUARIO=`w | grep $terminal | awk '{print $1}'`
+      fi
 
-        # User specific environment and startup programs
-        IP=$(w -f | grep $terminal | awk '{print $3}')
-        PATH=$PATH:$HOME/bin
-        TTY=$(/usr/bin/tty)
-        export PATH TTY IP USUARIO HOSTNAME
-        unset USERNAME
-    when: ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_major_version'] == '9'
+      # User specific environment and startup programs
+      IP=$(w -f | grep $terminal | awk '{print $3}')
+      PATH=$PATH:$HOME/bin
+      TTY=$(/usr/bin/tty)
+      export PATH TTY IP USUARIO HOSTNAME
+      unset USERNAME
+  loop: "{{ home_dirs.stdout_lines }}"
+  when: is_el_supported
 
-  - name: Agrega configuracion a rsyslog.conf
-    lineinfile:
-      path: /etc/rsyslog.conf
-      line: 'local6.notice                                           /var/log/rootcmd.log #configurar log local'
-      create: yes
-      backup: yes
-      insertafter: EOF
-      state: present
-    when: ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_major_version'] == '9'
-  
-  - name: Reinicia servicio rsyslog
-    service:
-      name: rsyslog
-      state: restarted
+# ----- /etc/skel for new users -----
+
+- name: Ensure /etc/skel/.bashrc exists
+  ansible.builtin.file:
+    path: /etc/skel/.bashrc
+    state: touch
+  when: is_el_supported
+
+- name: Insert logging block into /etc/skel/.bashrc
+  ansible.builtin.blockinfile:
+    path: /etc/skel/.bashrc
+    backup: true
+    create: true
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+    block: |
+      # Config for root-command-log – do not modify
+      PROMPT_COMMAND='history -a >(tee -a ~/.bash_history | logger -p local6.notice -t "$HOSTNAME ; $USUARIO: ; IP_SOURCE=$IP ; CMD> $SSH_CONNECTION")'
+  when: is_el_supported
+
+- name: Ensure /etc/skel/.bash_profile exists
+  ansible.builtin.file:
+    path: /etc/skel/.bash_profile
+    state: touch
+  when: is_el_supported
+
+- name: Insert environment block into /etc/skel/.bash_profile
+  ansible.builtin.blockinfile:
+    path: /etc/skel/.bash_profile
+    backup: true
+    create: true
+    marker: "# {mark} ANSIBLE MANAGED BLOCK"
+    block: |
+      # Config for root-command-log – do not modify
+      terminal=`tty | cut -d"/" -f 3,4`
+      HOSTNAME=`hostname`
+      INFO_USER=$(w | grep $terminal | grep "priv" | wc -l)
+      if test $INFO_USER -eq "1"
+      then
+      USUARIOp1=S`w | grep $terminal | awk '{print $1}'`
+      USUARIO=SUDO_`w | grep $terminal | awk '{print $8}'`
+      else
+      USUARIO=`w | grep $terminal | awk '{print $1}'`
+      fi
+
+      # User specific environment and startup programs
+      IP=$(w -f | grep $terminal | awk '{print $3}')
+      PATH=$PATH:$HOME/bin
+      TTY=$(/usr/bin/tty)
+      export PATH TTY IP USUARIO HOSTNAME
+      unset USERNAME
+  when: is_el_supported
+
+# ----- rsyslog rule -----
+
+- name: Ensure rsyslog rule for local6.notice -> /var/log/rootcmd.log
+  ansible.builtin.lineinfile:
+    path: /etc/rsyslog.conf
+    line: 'local6.notice                                           /var/log/rootcmd.log # local logging for root commands'
+    create: true
+    backup: true
+    insertafter: EOF
+    state: present
+  when: is_el_supported
+
+- name: Restart rsyslog
+  ansible.builtin.service:
+    name: rsyslog
+    state: restarted
+  when: is_el_supported
+
     when: ansible_facts['distribution'] == 'RedHat' and ansible_facts['distribution_major_version'] == '9'
