@@ -1,2 +1,8 @@
 ---
-# defaults file for manage-packages
+# Tunables
+update_cache: false
+
+# Lists of packages
+packages_to_install: []     # e.g. [vim, git]
+packages_to_remove: []      # e.g. [telnet]
+packages_pinned: []         # e.g. [{ name: "kernel", version: "5.14.0-427.22.1.el9_4" }]
