@@ -1,0 +1,55 @@
+---
+- name: Run Insights cleanup and re-register on RHEL
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Find etag files under /etc/insights-client
+      ansible.builtin.find:
+        paths: /etc/insights-client
+        patterns: ".*.etag"
+        file_type: file
+        hidden: true
+      register: etag_files
+
+    - name: Remove etag files
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ etag_files.files }}"
+      loop_control:
+        label: "{{ item.path }}"
+
+    - name: Find newest.egg* in /var/lib/insights
+      ansible.builtin.find:
+        paths: /var/lib/insights
+        patterns: "newest.egg*"
+        file_type: file
+      register: egg_files
+
+    - name: Remove newest.egg* files
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ egg_files.files }}"
+      loop_control:
+        label: "{{ item.path }}"
+
+    - name: Re-register with insights-client
+      ansible.builtin.command: insights-client --register
+      register: register_output
+      changed_when: true
+
+    - name: Get insights-client version
+      ansible.builtin.command: insights-client --version
+      register: insights_version_output
+      changed_when: false
+
+    - name: Display insights-client version
+      ansible.builtin.debug:
+        msg: "{{ insights_version_output.stdout }}"
+
+    - name: Restart insights-client service
+      ansible.builtin.systemd:
+        name: insights-client
+        state: restarted
