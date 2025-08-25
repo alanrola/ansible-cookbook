@@ -38,6 +38,11 @@ This folder contains a collection of **Ansible playbooks**, written as reusable 
       <td><code>ansible-playbook -i inventory/hosts.ini playbooks/modify_rhsm_conf.yml</code></td>
     </tr>
     <tr>
+      <td><code>change-permissions-777-to-755.yml</code></td>
+      <td>Sets provided files to <code>0755</code> per host–file pairs passed via <code>server_file_list</code>.</td>
+      <td><code>ansible-playbook -i inventory/hosts.ini playbooks/change-permissions-777-to-755.yml -e "mode=0755 server_file_list='host1 /path/to/file\nhost2 /another/path'"</code></td>
+    </tr>
+    <tr>
       <td><em>(coming soon)</em></td>
       <td>More recipes will be added here.</td>
       <td>—</td>
