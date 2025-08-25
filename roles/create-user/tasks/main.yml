@@ -1,42 +1,118 @@
 ---
-  - name: Verificar si el grupo existe
-    ansible.builtin.getent:
-      database: group
-      key: "{{ grupo }}"
-    register: grupo_existente
-    ignore_errors: yes
+# Create or remove a local user account on EL 8/9, optionally:
+# - manage groups
+# - set shell / home / UID
+# - set hashed password or lock it
+# - grant sudo (with optional NOPASSWD) via /etc/sudoers.d/<user>
+# - install SSH authorized_keys
 
-  - name: Crear el grupo si no existe
-    ansible.builtin.group:
-      name: "{{ grupo }}"
-      state: present
-    when: grupo_existente.failed
+- name: Assert required variable user_name
+  ansible.builtin.assert:
+    that:
+      - user_name is defined
+      - user_name | length > 0
+    fail_msg: "`user_name` is required"
 
-  - name: Crea Usuario 
-    ansible.builtin.user: 
-      name: "{{ usuario }}"
-      comment: "{{ comentario }}"
-      group: "{{ grupo }}"
-      password: "{{ password | password_hash('sha512') }}"
-      state: present
-      expires: -1      
-      
-  - name: Asegurar que la contraseña del usuario nunca expira
-    command: chage -M 99999 "{{ usuario }}"
-    when: expira == 'NO'
+- name: Set EL helpers (8/9 supported)
+  ansible.builtin.set_fact:
+    el_major: "{{ ansible_facts.distribution_major_version | int }}"
+    is_el_supported: "{{ ansible_facts.os_family == 'RedHat' and (ansible_facts.distribution_major_version | int) in [8, 9] }}"
 
-  - name: Verificar si el grupo ya está en sudoers
-    ansible.builtin.command:
-      cmd: grep -q '^%{{ grupo }} ALL=(ALL) NOPASSWD:ALL' /etc/sudoers
-    register: sudoers_check
-    ignore_errors: yes
-    changed_when: false
+- name: Fail if not EL 8/9
+  ansible.builtin.assert:
+    that:
+      - is_el_supported
+    fail_msg: "This role currently supports only RHEL/Rocky/Alma 8 or 9."
 
-  - name: Agregar usuario al archivo sudoers si es necesario
-    ansible.builtin.lineinfile:
-      path: /etc/sudoers
-      state: present
-      regexp: '^%{{ grupo }}'
-      line: '%{{ grupo }} ALL=(ALL) NOPASSWD:ALL'
-      validate: 'visudo -cf %s'
-    when: agregar_sudoers == 'SI' and sudoers_check.rc != 0
+# ----- Removal path (short-circuit if state=absent) -----
+- name: Remove user (and optionally its home)
+  ansible.builtin.user:
+    name: "{{ user_name }}"
+    state: absent
+    remove: "{{ user_remove_home | bool }}"
+  when: user_state | default('present') == 'absent'
+
+- name: Remove sudoers drop-in if user absent
+  ansible.builtin.file:
+    path: "/etc/sudoers.d/{{ user_name }}"
+    state: absent
+  when: user_state | default('present') == 'absent'
+# End removal path
+
+# ----- Ensure groups exist (when creating/present) -----
+- name: Ensure declared supplemental groups exist
+  ansible.builtin.group:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ user_groups | default([]) }}"
+  when: user_state | default('present') == 'present'
+
+# ----- Create / modify user -----
+- name: Create or update user
+  ansible.builtin.user:
+    name: "{{ user_name }}"
+    uid: "{{ user_uid | default(omit) }}"
+    shell: "{{ user_shell }}"
+    home: "{{ user_home | default('/home/' ~ user_name) }}"
+    create_home: "{{ user_create_home | bool }}"
+    password: "{{ user_password | default(omit) }}"         # must be a hashed password if provided
+    password_lock: "{{ user_password_lock | bool }}"
+    state: present
+  when: user_state | default('present') == 'present'
+
+- name: Manage supplemental groups (append)
+  ansible.builtin.user:
+    name: "{{ user_name }}"
+    groups: "{{ user_groups | default([]) }}"
+    append: "{{ user_append_groups | bool }}"
+  when:
+    - user_state | default('present') == 'present'
+    - (user_groups | default([])) | length > 0
+
+# ----- Sudoers (drop-in) -----
+- name: Configure sudo privileges via /etc/sudoers.d/<user>
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ user_name }}"
+    mode: "0440"
+    owner: root
+    group: root
+    content: |
+      {{ user_name }} ALL=(ALL){{ ' NOPASSWD:' if user_sudo_nopasswd | bool else '' }} ALL
+  when:
+    - user_state | default('present') == 'present'
+    - user_sudo | bool
+  notify: Validate sudoers drop-ins
+
+- name: Ensure no sudoers drop-in if sudo disabled
+  ansible.builtin.file:
+    path: "/etc/sudoers.d/{{ user_name }}"
+    state: absent
+  when:
+    - user_state | default('present') == 'present'
+    - not (user_sudo | bool)
+
+# ----- SSH authorized_keys -----
+- name: Ensure ~/.ssh exists
+  ansible.builtin.file:
+    path: "{{ (user_home | default('/home/' ~ user_name)) ~ '/.ssh' }}"
+    state: directory
+    owner: "{{ user_name }}"
+    group: "{{ user_name }}"
+    mode: "0700"
+  when:
+    - user_state | default('present') == 'present'
+    - (user_ssh_authorized_keys | default([])) | length > 0
+
+- name: Install authorized_keys
+  ansible.builtin.copy:
+    dest: "{{ (user_home | default('/home/' ~ user_name)) ~ '/.ssh/authorized_keys' }}"
+    owner: "{{ user_name }}"
+    group: "{{ user_name }}"
+    mode: "0600"
+    content: |
+      {% for k in (user_ssh_authorized_keys | default([])) %}
+      {{ k }}
+      {% endfor %}
+  when:
+    - user_state | default('present') == 'present'
+    - (user_ssh_authorized_keys | default([])) | length > 0
