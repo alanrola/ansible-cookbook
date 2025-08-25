@@ -1,2 +1,4 @@
 ---
-# handlers file for 1-ROLE-VACIO
+- name: Validate sudoers drop-ins
+  ansible.builtin.command: visudo -cf /etc/sudoers
+  changed_when: false
