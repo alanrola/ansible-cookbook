@@ -1,0 +1,3 @@
+---
+# vars file for install_node_exporter
+prometheus_server: your-prometheus-server.example.com

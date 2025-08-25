@@ -1,0 +1,59 @@
+---
+# tasks file for install_node_exporter
+- name: Extraer el archivo tar.gz de node_exporter
+  ansible.builtin.unarchive:
+    src: node_exporter-1.8.2.linux-amd64.tar.gz
+    dest: /tmp/
+    remote_src: no  # El archivo está en la carpeta 'files' del role
+
+- name: Mover el binario de node_exporter a /usr/local/bin/
+  ansible.builtin.copy:
+    src: /tmp/node_exporter-1.8.2.linux-amd64/node_exporter
+    dest: /usr/local/bin/node_exporter
+    mode: '0755'
+    remote_src: yes
+  become: true  # Asegura que tenga permisos suficientes
+
+- name: Crear archivo de servicio systemd para node_exporter
+  ansible.builtin.template:
+    src: node_exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+    mode: '0644'
+  notify: Reload systemd
+
+- name: Iniciar y habilitar node_exporter
+  ansible.builtin.systemd:
+    name: node_exporter
+    state: started
+    enabled: yes
+
+# Inserción línea por línea al final del archivo
+#- name: Insertar job_name en Prometheus
+#  ansible.builtin.lineinfile:
+#    path: /etc/prometheus/prometheus.yml
+#    insertafter: EOF  # Inserta al final del archivo
+#    line: '  - job_name: "{{ inventory_hostname }}_node_exporter"'
+#    state: present
+#  delegate_to: "{{ prometheus_server }}"
+#  become: true
+#  notify: Reload Prometheus
+
+#- name: Insertar static_configs en Prometheus
+#  ansible.builtin.lineinfile:
+#    path: /etc/prometheus/prometheus.yml
+#    insertafter: '^  - job_name: "{{ inventory_hostname }}_node_exporter"$'
+#    line: '    static_configs:'
+#    state: present
+#  delegate_to: "{{ prometheus_server }}"
+#  become: true
+#  notify: Reload Prometheus
+
+- name: Insertar targets en Prometheus
+  ansible.builtin.lineinfile:
+    path: /etc/prometheus/prometheus.yml
+    insertafter: EOF
+    line: '      - targets: ["{{ inventory_hostname }}:9100"]'
+    state: present
+  delegate_to: "{{ prometheus_server }}"
+#  become: true
+  notify: Reload Prometheus

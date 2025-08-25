@@ -1,0 +1,12 @@
+---
+# handlers file for install_node_exporter
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: yes
+    
+- name: Reload Prometheus
+  ansible.builtin.systemd:
+    name: prometheus
+    state: restarted
+  delegate_to: "{{ prometheus_server }}"
+  #when: ansible_hostname == "{{ prometheus_server }}"
