@@ -53,6 +53,11 @@ This folder contains a collection of **Ansible playbooks**, written as reusable 
       <td><code>ansible-playbook -i inventory/hosts.ini playbooks/install_scap_client.yml</code></td>
     </tr>
     <tr>
+      <td><code>clean_path.yml</code></td>
+      <td>Cleans up old files under a target path based on age, size, and filename patterns.</td>
+      <td><code>ansible-playbook -i inventory/hosts.ini playbooks/clean_path.yml -e "target_host=all target_path=/var/log age_days=14 max_file_size_mb=200"</code></td>
+    </tr>
+    <tr>
       <td><em>(coming soon)</em></td>
       <td>More recipes will be added here.</td>
       <td>—</td>
