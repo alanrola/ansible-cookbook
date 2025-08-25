@@ -28,6 +28,11 @@ This folder contains a collection of **Ansible playbooks**, written as reusable 
       <td><code>ansible-playbook -i inventory/hosts.ini playbooks/check-openssh-version.yml</code></td>
     </tr>
     <tr>
+      <td><code>fix_uid_conflict.yml</code></td>
+      <td>Resolves UID conflicts by relocating the conflicting user to a free UID and assigning the target UID to the requested user.</td>
+      <td><code>ansible-playbook -i inventory/hosts.ini playbooks/fix_uid_conflict.yml -e "usuario_target=myuser uid_target=1500"</code></td>
+    </tr>
+    <tr>
       <td><em>(coming soon)</em></td>
       <td>More recipes will be added here.</td>
       <td>—</td>
