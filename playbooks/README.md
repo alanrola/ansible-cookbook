@@ -18,9 +18,9 @@ This folder contains a collection of **Ansible playbooks**, written as reusable 
   </thead>
   <tbody>
     <tr>
-      <td><code>install_nginx.yml</code></td>
-      <td>Installs and starts the Nginx web server.</td>
-      <td><code>ansible-playbook -i inventory/hosts.ini playbooks/install_nginx.yml</code></td>
+      <td><code>change_symb_link.yml</code></td>
+      <td>Updates the Java symbolic link to point to the desired JDK version.</td>
+      <td><code>ansible-playbook -i inventory/hosts.ini playbooks/change_symb_link.yml -e "source=/usr/java/jdk1.8.0_381 dest=/usr/java/latest owner=root group=root"</code></td>
     </tr>
     <tr>
       <td><em>(coming soon)</em></td>
