@@ -72,10 +72,5 @@ This folder contains a collection of **Ansible playbooks**, written as reusable 
       <td>Cleans Insights cache files, re-registers the client, prints version, and restarts the service (per Red Hat remediation 7122649).</td>
       <td><code>ansible-playbook -i inventory/hosts.ini playbooks/insights-client_7122649.yml</code></td>
     </tr>
-    <tr>
-      <td><a href="./install_nginx.yml">install_nginx.yml</a></td>
-      <td>Installs and starts the Nginx web server.</td>
-      <td><code>ansible-playbook -i inventory/hosts.ini playbooks/install_nginx.yml</code></td>
-    </tr>
   </tbody>
 </table>
