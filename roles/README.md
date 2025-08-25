@@ -45,23 +45,22 @@ Recommended **Galaxy-style** structure for a role:
 
 roles/
 └── my_role_name/
-├── defaults/
-│ └── main.yml # Low-priority defaults (document your vars here)
-├── files/ # Static files (copied as-is)
-├── handlers/
-│ └── main.yml # Handlers (restarts, notifications)
-├── meta/
-│ └── main.yml # galaxy_info, dependencies, supported platforms
-├── tasks/
-│ └── main.yml # Role entry point
-├── templates/ # Jinja2 templates (*.j2)
-├── vars/
-│ └── main.yml # High-priority vars (use sparingly)
-├── README.md # Role documentation (what it does, vars, examples)
-└── tests/ # (Optional) Simple tests: playbook + inventory
-├── inventory
-└── test.yml
-
+    ├── defaults/
+    │   └── main.yml          # Low-priority defaults (document your vars here)
+    ├── files/                # Static files (copied as-is)
+    ├── handlers/
+    │   └── main.yml          # Handlers (restarts, notifications)
+    ├── meta/
+    │   └── main.yml          # galaxy_info, dependencies, supported platforms
+    ├── tasks/
+    │   └── main.yml          # Role entry point
+    ├── templates/            # Jinja2 templates (*.j2)
+    ├── vars/
+    │   └── main.yml          # High-priority vars (use sparingly)
+    ├── README.md             # Role documentation (what it does, vars, examples)
+    └── tests/                # (Optional) Simple tests: playbook + inventory
+        ├── inventory
+        └── test.yml
 
 > **Tip:** Put tunable variables in `defaults/main.yml`.  
 > Avoid secrets inside the role—use **Ansible Vault** externally.  
@@ -71,11 +70,13 @@ roles/
 
 Generate a full skeleton with **Ansible Galaxy**:
 
+From your repo root, create the role under ./roles
 ```bash
-# From your repo root, create the role under ./roles
 ansible-galaxy init --init-path roles my_role_name
+```
 
-# Alternative (creates in the current directory):
+Alternative (creates in the current directory):
+```bash
 ansible-galaxy init my_role_name
 ```
 
