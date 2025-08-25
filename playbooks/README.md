@@ -33,6 +33,11 @@ This folder contains a collection of **Ansible playbooks**, written as reusable 
       <td><code>ansible-playbook -i inventory/hosts.ini playbooks/fix_uid_conflict.yml -e "usuario_target=myuser uid_target=1500"</code></td>
     </tr>
     <tr>
+      <td><code>modify_rhsm_conf.yml</code></td>
+      <td>Updates <code>rhsm.conf</code> (port and insecure) and refreshes RHSM subscription if changes were applied.</td>
+      <td><code>ansible-playbook -i inventory/hosts.ini playbooks/modify_rhsm_conf.yml</code></td>
+    </tr>
+    <tr>
       <td><em>(coming soon)</em></td>
       <td>More recipes will be added here.</td>
       <td>—</td>
