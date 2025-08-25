@@ -43,6 +43,7 @@ Reusable **Ansible roles** that group tasks, handlers, templates and files aroun
 
 Recommended **Galaxy-style** structure for a role:
 
+```
 roles/
 └── my_role_name/
     ├── defaults/
@@ -61,6 +62,7 @@ roles/
     └── tests/                # (Optional) Simple tests: playbook + inventory
         ├── inventory
         └── test.yml
+```
 
 > **Tip:** Put tunable variables in `defaults/main.yml`.  
 > Avoid secrets inside the role—use **Ansible Vault** externally.  
