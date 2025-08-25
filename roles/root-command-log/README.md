@@ -38,14 +38,18 @@ Minimal play:
 
 ## ✅ Verify
 
+### Check rsyslog rule is active
 ```bash
-# Check rsyslog rule is active
 grep -F 'local6.notice' /etc/rsyslog.conf
+```
 
-# Send a test message
+### Send a test message
+```bash
 logger -p local6.notice "root-command-log test message"
+```
 
-# Tail the log file
+### Tail the log file
+```bash
 tail -n 20 /var/log/rootcmd.log
 ```
 
