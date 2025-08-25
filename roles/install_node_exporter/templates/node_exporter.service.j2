@@ -4,8 +4,12 @@ Wants=network-online.target
 After=network-online.target
 
 [Service]
+User={{ node_exporter_user }}
+Group={{ node_exporter_user }}
 Type=simple
-ExecStart=/usr/local/bin/node_exporter --collector.systemd
+ExecStart={{ node_exporter_bin }} --web.listen-address={{ node_exporter_listen_address }}{% for c in node_exporter_collectors_enabled %} --collector.{{ c }}{% endfor %}{% for f in node_exporter_extra_flags %} {{ f }}{% endfor %}
+Restart=on-failure
+RestartSec=5s
 
 [Install]
 WantedBy=multi-user.target
