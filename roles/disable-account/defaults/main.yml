@@ -1,2 +1,16 @@
 ---
-# defaults file for disable-account
+# Target
+user_name: ""                 # REQUIRED
+
+# Actions
+disable_lock_password: true
+disable_expire_account: true
+disable_shell_nologin: true
+disable_remove_sudoers: true
+disable_revoke_keys: true
+disable_backup_keys: true
+disable_remove_crontab: true
+disable_kill_processes: true
+
+# Backups
+disable_backup_dir: /root/disabled-accounts
