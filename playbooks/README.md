@@ -18,7 +18,7 @@ This folder contains a collection of **Ansible playbooks**, written as reusable 
   </thead>
   <tbody>
     <tr>
-      <td><code>change_symb_link.yml</code></td>
+      <td><a href="./playbooks/change_symb_link.yml">change_symb_link.yml</a></td>
       <td>Updates the Java symbolic link to point to the desired JDK version.</td>
       <td><code>ansible-playbook -i inventory/hosts.ini playbooks/change_symb_link.yml -e "source=/usr/java/jdk1.8.0_381 dest=/usr/java/latest owner=root group=root"</code></td>
     </tr>
