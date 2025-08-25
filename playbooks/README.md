@@ -43,6 +43,11 @@ This folder contains a collection of **Ansible playbooks**, written as reusable 
       <td><code>ansible-playbook -i inventory/hosts.ini playbooks/change-permissions-777-to-755.yml -e "mode=0755 server_file_list='host1 /path/to/file\nhost2 /another/path'"</code></td>
     </tr>
     <tr>
+      <td><code>configure-cron.yml</code></td>
+      <td>Creates/updates a cron entry under <code>/etc/cron.d</code> using the Ansible cron module.</td>
+      <td><code>ansible-playbook -i inventory/hosts.ini playbooks/configure-cron.yml -e "name=nightly_backup minute=0 hour=3 day=* month=* weekday=* user=root job='/usr/local/bin/backup.sh' cron_file=nightly_backup"</code></td>
+      </tr>
+    <tr>
       <td><em>(coming soon)</em></td>
       <td>More recipes will be added here.</td>
       <td>—</td>
