@@ -63,6 +63,11 @@ This folder contains a collection of **Ansible playbooks**, written as reusable 
       <td><code>ansible-playbook -i inventory/hosts.ini playbooks/refresh_expire_user.yml -e "usuario=myuser dias_expiracion=90"</code></td>
     </tr>
     <tr>
+      <td><code>list_pods.yml</code></td>
+      <td>Lists all Kubernetes Pods cluster-wide and prints a compact table (namespace, name, ready, status, restarts, age, IP, node).</td>
+      <td><code>ansible-playbook -i localhost, playbooks/list_pods.yml</code></td>
+    </tr>
+    <tr>
       <td><em>(coming soon)</em></td>
       <td>More recipes will be added here.</td>
       <td>—</td>
