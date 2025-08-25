@@ -23,6 +23,11 @@ This folder contains a collection of **Ansible playbooks**, written as reusable 
       <td><code>ansible-playbook -i inventory/hosts.ini playbooks/change_symb_link.yml -e "source=/usr/java/jdk1.8.0_381 dest=/usr/java/latest owner=root group=root"</code></td>
     </tr>
     <tr>
+      <td><code>check-openssh-version.yml</code></td>
+      <td>Checks and prints the OpenSSH client version on each host.</td>
+      <td><code>ansible-playbook -i inventory/hosts.ini playbooks/check-openssh-version.yml</code></td>
+    </tr>
+    <tr>
       <td><em>(coming soon)</em></td>
       <td>More recipes will be added here.</td>
       <td>—</td>
