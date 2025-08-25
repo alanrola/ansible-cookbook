@@ -1,25 +1,84 @@
 # ansible-cookbook
-Ansible Automation Cookbook: Ready-to-use playbooks and roles, explained step by step.
 
-# Ansible Playbooks and Roles – Community Cookbook
+**Ansible Automation Cookbook** — clear, reusable playbooks and roles, explained step-by-step.
 
-Welcome to my **personal collection of Ansible playbooks and roles**.  
-This repository is meant to serve as a **community cookbook**: a set of simple, reusable, and well-documented examples for learning and practicing automation with Ansible.
+> This repository is a personal collection of Ansible examples, shared as a community resource.
 
 ---
 
-## What’s inside?
+## 🚀 What’s inside
 
-- **Ready-to-use playbooks** → practical recipes (package installation, service configuration, patching, etc.).  
-- **Reusable roles** → structured following Ansible best practices (defaults, handlers, tasks, templates, files).  
-- **Step-by-step guides** → written so that even beginners can understand and use them.  
-- **Good practices** → clear inventories, variable separation, and linting recommendations.
+- **Ready-to-use playbooks** — practical recipes (packages, services, patching, audits, etc.).
+- **Reusable roles** — Galaxy-style structure with defaults, handlers, tasks, templates, and files.
+- **Beginner-friendly docs** — each example explains _what_ it does and _how_ to run it.
+- **Good practices** — idempotence, minimal privileges, variables in defaults, and tidy inventories.
 
-## Purpose
+<table>
+  <thead>
+    <tr>
+      <th>📁 Folder</th>
+      <th>📝 Description</th>
+      <th>🔗 Docs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>playbooks/</code></td>
+      <td>Standalone playbooks you can run as-is.</td>
+      <td><a href="./playbooks/README.md">Playbooks index</a></td>
+    </tr>
+    <tr>
+      <td><code>roles/</code></td>
+      <td>Reusable roles with defaults and examples.</td>
+      <td><a href="./roles/README.md">Roles index</a></td>
+    </tr>
+  </tbody>
+</table>
 
-This project is **not intended as a production-ready library**.  
-Instead, it is a **collection of learning materials** and **practical automation recipes** to inspire, adapt, and experiment with Ansible.
+---
 
-Feel free to use these playbooks as-is, modify them for your environment, or share ideas for improvement.
+## 🗂️ Structure (short)
 
-### This repository is a personal collection of Ansible examples, shared as a community resource.
+```text
+ansible-cookbook/
+├── playbooks/      # ready-to-run YAMLs + README with a usage table
+└── roles/          # Galaxy-style roles + README with a usage table
+```
+
+---
+
+## ⚙️ Quickstart
+
+> You only need Ansible on your control machine. Inventory examples use INI; use your preferred format.
+
+**Run a playbook (example):**
+```bash
+ansible-playbook -i inventory/hosts.ini playbooks/check-openssh-version.yml
+```
+
+**Use a role in your playbook (example):**
+```yaml
+- hosts: all
+  become: true
+  roles:
+    - role: manage-packages
+      vars:
+        packages_to_install: [vim, git]
+```
+
+More examples (and exact variables) are documented in each subfolder’s README.
+
+---
+
+## 🎯 Scope & Intent
+
+- This is **not** a production library; it’s a **learning resource** with practical, readable examples.
+- Each recipe prefers **clarity over cleverness**, and small building blocks over monoliths.
+- Contributions are welcome: issues, feedback, or small PRs that improve readability or safety.
+
+---
+
+## 🛡️ Notes
+
+- Review variables before running in sensitive environments.
+- Many playbooks/roles target **RHEL/Rocky/Alma 8/9**; platform-specific notes are called out per item.
