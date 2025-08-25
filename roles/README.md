@@ -25,6 +25,11 @@ Reusable **Ansible roles** that group tasks, handlers, templates and files aroun
       <td><code>- role: manage-packages</code> with <code>packages_to_install: [vim, git]</code></td>
     </tr>
     <tr>
+      <td><code>install_node_exporter</code></td>
+      <td>Installs Prometheus node_exporter and manages it as a systemd service (EL 8/9).</td>
+      <td><code>- role: install_node_exporter</code></td>
+    </tr>
+    <tr>
       <td><em>(coming soon)</em></td>
       <td>First role will appear here.</td>
       <td>—</td>
