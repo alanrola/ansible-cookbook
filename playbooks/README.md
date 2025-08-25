@@ -68,6 +68,11 @@ This folder contains a collection of **Ansible playbooks**, written as reusable 
       <td><code>ansible-playbook -i localhost, playbooks/list_pods.yml</code></td>
     </tr>
     <tr>
+      <td><code>insights-client_7122649.yml</code></td>
+      <td>Cleans Insights cache files, re-registers the client, prints version, and restarts the service (per Red Hat remediation 7122649).</td>
+      <td><code>ansible-playbook -i inventory/hosts.ini playbooks/insights-client_7122649.yml</code></td>
+    </tr>
+    <tr>
       <td><em>(coming soon)</em></td>
       <td>More recipes will be added here.</td>
       <td>—</td>
