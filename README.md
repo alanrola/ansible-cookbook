@@ -25,12 +25,12 @@
     <tr>
       <td><code>playbooks/</code></td>
       <td>Standalone playbooks you can run as-is.</td>
-      <td><a href="./playbooks/">Playbooks index</a></td>
+      <td><a href="./playbooks/README.md">Playbooks index</a></td>
     </tr>
     <tr>
       <td><code>roles/</code></td>
       <td>Reusable roles with defaults and examples.</td>
-      <td><a href="./roles/">Roles index</a></td>
+      <td><a href="./roles/README.md">Roles index</a></td>
     </tr>
   </tbody>
 </table>
