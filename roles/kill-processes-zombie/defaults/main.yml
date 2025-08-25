@@ -1,2 +1,10 @@
 ---
-# defaults file for kill-processes--zombie
+# Safety & behavior
+dry_run: true                 # Start in dry-run mode. Set to false to actually send signals.
+ppid_exclude: [1]            # Never signal PPID 1 (systemd/init)
+parent_name_exclude: [systemd, init]  # Do not kill parents with these names
+
+# Signals & timing
+kill_signal_term: "TERM"     # First attempt
+kill_signal_kill: "KILL"     # Fallback if zombies persist
+wait_after_term: 3           # Seconds to wait after SIGTERM before checking again
