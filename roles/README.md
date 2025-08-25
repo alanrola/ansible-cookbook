@@ -20,32 +20,32 @@ Reusable **Ansible roles** that group tasks, handlers, templates and files aroun
   </thead>
   <tbody>
     <tr>
-      <td><a href="./manage-packages/README.md"><code>manage-packages</code></a></td>
+      <td><a href="./manage-packages/"><code>manage-packages</code></a></td>
       <td>Installs/upgrades or removes packages, optionally updates DNF cache and pins specific versions.</td>
       <td><code>- role: manage-packages</code> with <code>packages_to_install: [vim, git]</code></td>
     </tr>
     <tr>
-      <td><a href="./install_node_exporter/README.md"><code>install_node_exporter</code></a></td>
+      <td><a href="./install_node_exporter/"><code>install_node_exporter</code></a></td>
       <td>Installs Prometheus node_exporter and manages it as a systemd service (EL 8/9).</td>
       <td><code>- role: install_node_exporter</code></td>
     </tr>
     <tr>
-      <td><a href="./kill-processes-zombie/README.md"><code>kill-processes-zombie</code></a></td>
+      <td><a href="./kill-processes-zombie/"><code>kill-processes-zombie</code></a></td>
       <td>Finds zombie processes and signals their parent PIDs to clean them up; starts in dry-run for safety.</td>
       <td><code>- role: kill-processes-zombie</code> with <code>dry_run: false</code></td>
     </tr>
     <tr>
-      <td><a href="./root-command-log/README.md"><code>root-command-log</code></a></td>
+      <td><a href="./root-command-log/"><code>root-command-log</code></a></td>
       <td>Logs interactive bash commands to syslog (local6.notice) and writes them to <code>/var/log/rootcmd.log</code> on EL 8/9.</td>
       <td><code>- role: root-command-log</code></td>
     </tr>
     <tr>
-      <td><a href="./create-user/README.md"><code>create-user</code></a></td>
+      <td><a href="./create-user/"><code>create-user</code></a></td>
       <td>Creates or removes a local user on EL 8/9, with groups, sudoers, password/lock, and SSH authorized_keys.</td>
       <td><code>- role: create-user</code> with <code>user_name=deploy</code></td>
     </tr>
     <tr>
-      <td><a href="./disable-account/README.md"><code>disable-account</code></a></td>
+      <td><a href="./disable-account/"><code>disable-account</code></a></td>
       <td>Safely disables a local account on EL 8/9 (lock, expire, nologin shell), revokes SSH keys with backup, removes crontab and sudoers; optional process kill.</td>
       <td><code>- role: disable-account</code> with <code>user_name=olduser</code></td>
     </tr>
