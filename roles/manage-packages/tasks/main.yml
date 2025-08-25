@@ -1,12 +1,25 @@
 ---
-# tasks file for manage-packages
-  - name: Instalar o actualizar paquete
-    ansible.builtin.yum:
-      name: "{{ package_name }}"
-      state: "{{ package_state }}" #present para instalar, latest para actualizar
-    register: package_result
+# Manage packages: install/upgrade, remove, optional cache update and pinning
+- name: Update DNF cache (optional)
+  ansible.builtin.dnf:
+    update_cache: true
+  when: (update_cache | default(false)) | bool
 
-  - name: Mostrar resultado
-    debug:
-      msg: "El paquete {{ package_name }} ha sido {{ package_state }} con éxito."
-    when: package_result.changed
+- name: Install or upgrade packages
+  ansible.builtin.package:
+    name: "{{ packages_to_install }}"
+    state: present
+  when: (packages_to_install | default([])) | length > 0
+
+- name: Remove packages
+  ansible.builtin.package:
+    name: "{{ packages_to_remove }}"
+    state: absent
+  when: (packages_to_remove | default([])) | length > 0
+
+- name: Ensure pinned package versions (optional)
+  ansible.builtin.package:
+    name: "{{ item.name }}-{{ item.version }}"
+    state: present
+  loop: "{{ packages_pinned | default([]) }}"
+  when: (packages_pinned | default([])) | length > 0
