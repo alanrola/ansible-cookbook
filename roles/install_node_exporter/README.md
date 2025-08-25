@@ -1,38 +1,73 @@
-Role Name
-=========
+# install_node_exporter
 
-A brief description of the role goes here.
+Installs **Prometheus node_exporter** and runs it as a systemd service.
 
-Requirements
-------------
+> Simple, idempotent role. Review variables before using in production.
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+---
 
-Role Variables
---------------
+## 🔧 Variables
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+<!-- HTML table for crisp rendering -->
+<table>
+  <thead>
+    <tr>
+      <th>Variable</th>
+      <th>Default</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>node_exporter_version</code></td>
+      <td><code>"1.8.2"</code></td>
+      <td>Node Exporter version to install.</td>
+    </tr>
+    <tr>
+      <td><code>node_exporter_download_url</code></td>
+      <td><code>https://github.com/prometheus/node_exporter/releases/.../node_exporter-&lt;version&gt;.linux-amd64.tar.gz</code></td>
+      <td>Source tarball URL.</td>
+    </tr>
+    <tr>
+      <td><code>node_exporter_checksum</code></td>
+      <td><code>""</code></td>
+      <td>Optional checksum (<code>sha256:...</code>) for verification.</td>
+    </tr>
+    <tr>
+      <td><code>node_exporter_user</code></td>
+      <td><code>node_exporter</code></td>
+      <td>System user that runs the service.</td>
+    </tr>
+    <tr>
+      <td><code>node_exporter_bin_dir</code></td>
+      <td><code>/usr/local/bin</code></td>
+      <td>Install directory for the binary.</td>
+    </tr>
+    <tr>
+      <td><code>node_exporter_listen_address</code></td>
+      <td><code>0.0.0.0:9100</code></td>
+      <td>Listen address for metrics.</td>
+    </tr>
+    <tr>
+      <td><code>node_exporter_collectors_enabled</code></td>
+      <td><code>[ "systemd" ]</code></td>
+      <td>Collectors to enable (adds <code>--collector.&lt;name&gt;</code> flags).</td>
+    </tr>
+    <tr>
+      <td><code>node_exporter_extra_flags</code></td>
+      <td><code>[]</code></td>
+      <td>Additional flags to append to ExecStart.</td>
+    </tr>
+  </tbody>
+</table>
 
-Dependencies
-------------
+---
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+## 🚀 Usage
 
-Example Playbook
-----------------
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
-
-License
--------
-
-BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+Minimal example:
+```yaml
+- hosts: all
+  become: true
+  roles:
+    - role: install_node_exporter
