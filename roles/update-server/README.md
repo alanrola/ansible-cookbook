@@ -106,8 +106,8 @@ ansible-playbook -i inventory.ini playbook.yml -b -vv
 
 ## 📝 Operational Notes
 
-- 🔄 **Idempotency**: The `copy` module only updates files when content differs. `yum`/`dnf` with `state: latest` ensures consistency without redundant changes.
-- 🔌 **No automatic reboots**: This playbook avoids reboot‑requiring packages. Schedule separate maintenance windows for kernel/systemd/glibc/firmware updates.
+-  **Idempotency**: The `copy` module only updates files when content differs. `yum`/`dnf` with `state: latest` ensures consistency without redundant changes.
+-  **No automatic reboots**: This playbook avoids reboot‑requiring packages. Schedule separate maintenance windows for kernel/systemd/glibc/firmware updates.
 
 ---
 
