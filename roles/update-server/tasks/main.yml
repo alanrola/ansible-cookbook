@@ -1,17 +1,7 @@
 ---
 - hosts: all
   tasks:
-    - name: Download script updateall.sh in /root
-      ansible.builtin.copy:
-        src: updateall.sh
-        dest: /root/updateall.sh
-        owner: root
-        group: root
-        mode: '0740'
-        force: false
-        validate_certs: false
-    
-    - name: Copy new config in yum.conf - RHEL7
+    - name: Copy new config in yum.conf - EL7
       ansible.builtin.copy:
         src: yum_7_exludes.conf
         dest: /etc/yum.conf
@@ -21,7 +11,7 @@
         validate_certs: false
       when: ansible_distribution_major_version == '7'
     
-    - name: Copy new config in dnf.conf - RHEL8
+    - name: Copy new config in dnf.conf - EL8
       ansible.builtin.copy:
         src: yum_8_exludes.conf
         dest: /etc/dnf/dnf.conf
@@ -31,7 +21,7 @@
         validate_certs: false
       when: ansible_distribution_major_version == '8'
     
-    - name: Copy new config in dnf.conf - RHEL9
+    - name: Copy new config in dnf.conf - EL9
       ansible.builtin.copy:
         src: yum_9_exludes.conf
         dest: /etc/dnf/dnf.conf
@@ -41,21 +31,21 @@
         validate_certs: false
       when: ansible_distribution_major_version == '9'
 
-    - name: Update without packages that need reboot - RHEL7
+    - name: Update without packages that need reboot - EL7
       ansible.builtin.yum:
         name: '*'
         state: latest
         exclude: kernel*,*-firmware-*,glibc*,linux-firmware,dbus*,systemd*,systemd-*,udev,hal,java*,libgudev1*,openssl*,nscd*,kmod*,libnsl*
       when: ansible_distribution_major_version == '7'
 
-    - name: Update without packages that need reboot - RHEL8
+    - name: Update without packages that need reboot - EL8
       ansible.builtin.dnf:
         name: '*'
         state: latest
         exclude: kernel*,*-firmware-*,glibc*,linux-firmware,dbus*,systemd*,systemd-*,udev,hal,java*,kmod*,libnsl*
       when: ansible_distribution_major_version == '8'
     
-    - name: Update without packages that need reboot - RHEL9
+    - name: Update without packages that need reboot - EL9
       ansible.builtin.dnf:
         name: '*'
         state: latest
