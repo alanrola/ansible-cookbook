@@ -5,12 +5,12 @@ It also replaces the system’s YUM/DNF configuration file with a predefined ver
 
 ## 📋 What It Does
 
-1️⃣ **Configuration replacement**
+1 **Configuration replacement**
    - EL 7 → copies `yum_7_exludes.conf` to `/etc/yum.conf`
    - EL 8 → copies `yum_8_exludes.conf` to `/etc/dnf/dnf.conf`
    - EL 9 → copies `yum_9_exludes.conf` to `/etc/dnf/dnf.conf`
 
-2️⃣ **Package updates with exclusions**
+2️ **Package updates with exclusions**
    - EL 7 → uses the `yum` module
    - EL 8/9 → use the `dnf` module
    - In all cases, critical packages are excluded to minimize downtime.
