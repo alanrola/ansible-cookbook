@@ -51,7 +51,7 @@ Reusable **Ansible roles** that group tasks, handlers, templates and files aroun
     </tr>
     <tr>
       <td><a href="./update-server/"><code>update-server</code></a></td>
-      <td>Update EL servers 7/8/9 non required reboot packages</td>
+      <td>Update EL servers 7/8/9 non required reboot packages, and add excludes in dnf/yum conf</td>
       <td><code>- role: update-server</code></td>
     </tr>
   </tbody>
