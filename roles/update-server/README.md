@@ -1,16 +1,16 @@
-# Controlled Updates for EL (7/8/9) with Reboot‑Safe Exclusions
+# 🚀 Controlled Updates for EL (7/8/9) with Reboot‑Safe Exclusions
 
 This Ansible playbook updates **EL 7, 8, and 9** systems to the latest available packages **while excluding** those that usually require a reboot (kernel, systemd, glibc, firmware, etc.).
 It also replaces the system’s YUM/DNF configuration file with a predefined version depending on the EL release.
 
-## What It Does
+## 📋 What It Does
 
-1. **Configuration replacement**
+1️⃣ **Configuration replacement**
    - EL 7 → copies `yum_7_exludes.conf` to `/etc/yum.conf`
    - EL 8 → copies `yum_8_exludes.conf` to `/etc/dnf/dnf.conf`
    - EL 9 → copies `yum_9_exludes.conf` to `/etc/dnf/dnf.conf`
 
-2. **Package updates with exclusions**
+2️⃣ **Package updates with exclusions**
    - EL 7 → uses the `yum` module
    - EL 8/9 → use the `dnf` module
    - In all cases, critical packages are excluded to minimize downtime.
@@ -19,7 +19,7 @@ It also replaces the system’s YUM/DNF configuration file with a predefined ver
 
 ---
 
-## Suggested Repo Layout
+## 📂 Suggested Repo Layout
 
 ```
 .
@@ -33,7 +33,7 @@ It also replaces the system’s YUM/DNF configuration file with a predefined ver
 
 ---
 
-## Requirements
+## ⚙️ Requirements
 
 - Ansible control node with SSH access to managed hosts.
 - Remote users with `root` privileges (use `-b/--become` when running).
@@ -41,7 +41,7 @@ It also replaces the system’s YUM/DNF configuration file with a predefined ver
 
 ---
 
-## Compatibility Matrix
+## 🧩 Compatibility Matrix
 
 | EL Version | Module Used             | Config Destination  |
 |--------------|-------------------------|---------------------|
@@ -51,7 +51,7 @@ It also replaces the system’s YUM/DNF configuration file with a predefined ver
 
 ---
 
-## Excluded Packages
+## 🚫 Excluded Packages
 
 To prevent unplanned reboots, the following are excluded during updates:
 
@@ -63,7 +63,7 @@ To prevent unplanned reboots, the following are excluded during updates:
 
 ---
 
-## Example Inventory
+## 📑 Example Inventory
 
 `inventory.ini`:
 ```ini
@@ -80,7 +80,7 @@ el9-01 ansible_host=10.0.0.91
 
 ---
 
-## Usage Examples
+## 💻 Usage Examples
 
 - Run on all hosts:
 ```bash
@@ -104,14 +104,14 @@ ansible-playbook -i inventory.ini playbook.yml -b -vv
 
 ---
 
-## Operational Notes
+## 📝 Operational Notes
 
-- **Idempotency**: The `copy` module only updates files when content differs. `yum`/`dnf` with `state: latest` ensures consistency without redundant changes.
-- **No automatic reboots**: This playbook avoids reboot‑requiring packages. Schedule separate maintenance windows for kernel/systemd/glibc/firmware updates.
+- 🔄 **Idempotency**: The `copy` module only updates files when content differs. `yum`/`dnf` with `state: latest` ensures consistency without redundant changes.
+- 🔌 **No automatic reboots**: This playbook avoids reboot‑requiring packages. Schedule separate maintenance windows for kernel/systemd/glibc/firmware updates.
 
 ---
 
-## Recommended Workflow
+## ✅ Recommended Workflow
 
 1. Test with `-C` (check mode) on a non‑production host.
 2. Validate that the `*_exludes.conf` files contain the intended directives (e.g., repo, exclude rules).
