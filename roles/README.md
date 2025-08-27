@@ -49,6 +49,11 @@ Reusable **Ansible roles** that group tasks, handlers, templates and files aroun
       <td>Safely disables a local account on EL 8/9 (lock, expire, nologin shell), revokes SSH keys with backup, removes crontab and sudoers; optional process kill.</td>
       <td><code>- role: disable-account</code> with <code>user_name=olduser</code></td>
     </tr>
+    <tr>
+      <td><a href="./update-server/"><code>update-server</code></a></td>
+      <td>Update EL servers 7/8/9 non required reboot packages</td>
+      <td><code>- role: update-server</code></td>
+    </tr>
   </tbody>
 </table>
 
